@@ -75,7 +75,7 @@ class TextDataset(Dataset):
         # 选择20%的token进行掩码，其中80%设为[mask], 10%设为[UNK],10%随机选择
         for idx, x in enumerate(self.args.text_features):
             end_dim = begin_dim + x[2]
-            for word_idx, word in enumerate(self.text_features[idx][i].split()[:self.args.block_size]):
+            for word_idx, word in enumerate(self.text_features[idx][i].replace('[', '').replace(']', '').split(', ')[:self.args.block_size]):
                 text_masks[word_idx] = 1
                 if random.random() < self.args.mlm_probability:
                     if word in self.args.vocab[idx]:
@@ -426,20 +426,15 @@ def main():
 
     base_path = "../data"
     text_features = [
-        [base_path + "/sequence_text_user_id_product_id.128d", 'sequence_text_user_id_product_id', 100, True],
-        [base_path + "/sequence_text_user_id_ad_id.128d", 'sequence_text_user_id_ad_id', 100, True],
-        [base_path + "/sequence_text_user_id_creative_id.128d", 'sequence_text_user_id_creative_id', 100, True],
-        [base_path + "/sequence_text_user_id_advertiser_id.128d", 'sequence_text_user_id_advertiser_id', 100, True],
-        [base_path + "/sequence_text_user_id_industry.128d", 'sequence_text_user_id_industry', 100, True],
-        [base_path + "/sequence_text_user_id_product_category.128d", 'sequence_text_user_id_product_category', 100,
-         True],
-        [base_path + "/sequence_text_user_id_time.128d", 'sequence_text_user_id_time', 100, True],
-        [base_path + "/sequence_text_user_id_click_times.128d", 'sequence_text_user_id_click_times', 100, True],
+        [base_path + "/tagid.128d", 'tagid', 128, True],
+        [base_path + "/tagid.128d", 'sorted_tagid', 128, True],
+        [base_path + "/time.128d", 'time', 128, True],
+        [base_path + "/time.128d", 'sorted_time', 128, True],
     ]
 
     # 读取训练数据
-    train_df = pd.read_pickle(os.path.join(base_path, 'train_user.pkl'))
-    test_df = pd.read_pickle(os.path.join(base_path, 'test_user.pkl'))
+    train_df = pd.read_csv(os.path.join(base_path, 'train', 'train_transform.csv'))
+    test_df = pd.read_csv(os.path.join(base_path, 'test', 'test_transform.csv'))
     dev_data = train_df.iloc[-10000:]
     train_data = train_df.iloc[:-10000].append(test_df)
 
@@ -454,7 +449,7 @@ def main():
         for feature in text_features:
             conter = Counter()
             for item in train_df[feature[1]].values:
-                for word in item.split():
+                for word in item.replace('[', '').replace(']', '').split(', '):
                     try:
                         conter[(feature[1], word)] += 1
                     except:
@@ -507,7 +502,7 @@ def main():
     for feature in text_features:
         conter = Counter()
         for item in train_data[feature[1]].values:
-            for word in item.split():
+            for word in item.replace('[', '').replace(']', '').split(', '):
                 try:
                     conter[word] += 1
                 except:
